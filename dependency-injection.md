@@ -6,6 +6,8 @@ This doc has been adapted from the Learn Go with Tests’ book to use C# syntax.
 
 **[You can find the original chapter from the book here](https://quii.gitbook.io/learn-go-with-tests/go-fundamentals/dependency-injection)**
 
+## Intro
+
 It is assumed that you have some understanding of inheritance and interfaces, as they will be needed for this.
 
 There are _a lot_ of misunderstandings around dependency injection around the programming community. Hopefully, this guide will show you how
