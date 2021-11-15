@@ -8,7 +8,7 @@ This doc has been adapted from the Learn Go with Tests’ book to use C# syntax.
 
 ## Intro
 
-It is assumed that you have some understanding of inheritance and interfaces, as they will be needed for this.
+It is assumed that you have some understanding of inheritance, interfaces, and how to run C# code, as they will be needed for this.
 
 There are _a lot_ of misunderstandings around dependency injection around the programming community. Hopefully, this guide will show you how
 
