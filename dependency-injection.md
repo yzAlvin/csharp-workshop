@@ -209,11 +209,11 @@ You can probably guess that `http.ResponseWriter` also implements `io.Writer` so
 
 ## Extensions
 
-Make the greet method print "Bye, Bob!", if the name passed in is Bob. Make sure your tests cover this.
+* Make the greet method print "Bye, Bob!", if the name passed in is Bob. Make sure your tests cover this.
 
-Make the greet method print something else after Hello __name__, cover it with a test and run the program to see it works in both places.
+* Make the greet method print something else after Hello __name__, cover it with a test and run the program to see it works in both places.
 
-Try doing the same but with `Console.ReadLine()`, perhaps the `Greet` method could take in a name from `ReadLine()`.
+* Try doing the same but with `Console.ReadLine()`, perhaps the `Greet` method could take in a name from `ReadLine()`.
 
 ## Wrapping up
 
