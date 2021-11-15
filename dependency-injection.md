@@ -26,7 +26,7 @@ Just to recap, here is what that function could look like
 ```csharp
 public void Greet(string name) 
 {
-	Console.WriteLine($"Hello {name}");
+	Console.WriteLine($"Hello, {name}");
 }
 ```
 
@@ -96,7 +96,8 @@ So we'll use it in our test to send in as our `TextWriter` and then we can check
 The test will not compile
 
 ```text
-some error message
+No overload for greet takes 2 arguments
+FakeWriter does not contain a definition for output ... 
 ```
 
 ## Write the minimal amount of code for the test to run and check the failing test output
@@ -121,21 +122,25 @@ The test fails. Notice that the name is getting printed out, but it's going to s
 Use the writer to send the greeting to the output in our test. The type signature of `WriteLine` is string -> void, so we just need to define it but instaed of writing to stdout, we could add it to some collection.
 
 ```csharp
-public class FakeWriter() : TextWriter
+public class FakeWriter : TextWriter
 {
 	public List<string> output;
 	public FakeWriter()
 	{
 		output = new List<string>();
 	}
-	public void WriteLine(string str)
+	public override void WriteLine(string str)
 	{
 		output.Add(str);
 	}
+
+	// Whatever methods we need to implement from TextWriter
 }
 ```
 
 The test now passes.
+
+Run the main program again, does it do what you would expect to happen?
 
 ## Refactor
 
@@ -150,7 +155,7 @@ public static void main()
 }
 ```
 
-`some error cannot use Console.Out as type FakeWriter in argument to Greet`
+`Cannot convert from System.IO TextWriter to FakeWriter`
 
 As discussed earlier `Console.WriteLine` is a method in `TextWriter` which we know both `Console.Out` and `FakeWriter` implement.
 
@@ -201,6 +206,12 @@ HTTP servers will be covered in a later chapter so don't worry too much about th
 When you write an HTTP handler, you are given an `http.ResponseWriter` and the `http.Request` that was used to make the request. When you implement your server you _write_ your response using the writer.
 
 You can probably guess that `http.ResponseWriter` also implements `io.Writer` so this is why we could re-use our `Greet` function inside our handler. -->
+
+## Extensions
+
+Make the greet method print "Bye, Bob!", if the name passed in is Bob. Make sure your tests cover this.
+
+Make the greet method print something 
 
 ## Wrapping up
 
