@@ -17,12 +17,15 @@ There are _a lot_ of misunderstandings around dependency injection around the pr
 * It facilitates testing
 * It allows you to write great, general-purpose functions.
 
-We want to write a function that greets someone, just like we did in the hello-world chapter but this time we are going to be testing the _actual printing_.
+We want to write a function that greets someone, but we are going to be testing the _actual printing_.
+
+To get the most benefit from this open your IDE and follow along with the examples.
 
 Just to recap, here is what that function could look like
 
 ```csharp
-public void Greet(string name) {
+public void Greet(string name) 
+{
 	Console.WriteLine($"Hello {name}");
 }
 ```
