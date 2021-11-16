@@ -136,33 +136,28 @@ Yes this seems trivial but this approach is what I would recommend for any proje
 
 Next we can make it print 2,1 and then "Go!".
 
-## TODO: Adapt for C#
-
-Everything below this has not yet been written in C#
-
 ## Write the test first
 
 By investing in getting the overall plumbing working right, we can iterate on our solution safely and easily. We will no longer need to stop and re-run the program to be confident of it working as all the logic is tested.
 
-```go
-func TestCountdown(t *testing.T) {
-	buffer := &bytes.Buffer{}
+```csharp
+[Fact]
+public void TestCountdown()
+{
+	var fakeWriter = new FakeWriter();
+	Countdown(fakeWriter);
+	Assert.Equal("3", fakeWriter.output.First());
+	Assert.Equal("2", fakeWriter.output.Skip(1).First());
+	Assert.Equal("1", fakeWriter.output.Skip(2).First());
+	Assert.Equal("Go!", fakeWriter.output.Skip(3).First());
 
-	Countdown(buffer)
-
-	got := buffer.String()
-	want := `3
-2
-1
-Go!`
-
-	if got != want {
-		t.Errorf("got %q want %q", got, want)
-	}
+	//alternatively:
+	// var expected = new List<string> {"3", "2", "1", "Go!"}
+	// Assert.Equal(expected, fakeWriter.output);
 }
 ```
 
-The backtick syntax is another way of creating a `string` but lets you put things like newlines which is perfect for our test.
+Skip and First can be used together to get each element of the array, however it doesn't check that "Go!" is the last string printed, so the alternative I have written checks that whatever was printed matches what is expected. You could use any collection for this not just `List`.
 
 ## Try and run the test
 
@@ -174,46 +169,54 @@ countdown_test.go:21: got '3' want '3
 ```
 ## Write enough code to make it pass
 
-```go
-func Countdown(out io.Writer) {
-	for i := 3; i > 0; i-- {
-		fmt.Fprintln(out, i)
+```csharp
+public void Countdown(FakeWriter out) 
+{
+	for (var i = 3; i > 0; i--)
+	{
+		out.WriteLine(i);
 	}
-	fmt.Fprint(out, "Go!")
+	out.WriteLine("Go!");
 }
 ```
 
-Use a `for` loop counting backwards with `i--` and use `fmt.Fprintln` to print to `out` with our number followed by a newline character. Finally use `fmt.Fprint` to send "Go!" aftward.
+Use a `for` loop counting backwards with `i--` and use `out.WriteLine` to print to `FakeWriter` with our number followed by a newline character. Finally use `out.WriteLine` to send "Go!" aftward.
 
 ## Refactor
 
-There's not much to refactor other than refactoring some magic values into named constants.
+There's not much to refactor other than refactoring some magic numbers into named constants.
 
-```go
-const finalWord = "Go!"
-const countdownStart = 3
+```csharp
+const string finalWord = "Go!";
+const string countdownStart = 3;
 
-func Countdown(out io.Writer) {
-	for i := countdownStart; i > 0; i-- {
-		fmt.Fprintln(out, i)
+public void Countdown(FakeWriter out) 
+{
+	for (var i = countdownStart; i > 0; i--)
+	{
+		out.WriteLine(i);
 	}
-	fmt.Fprint(out, finalWord)
+	out.WriteLine(finalWord);
 }
 ```
 
 If you run the program now, you should get the desired output but we don't have it as a dramatic countdown with the 1 second pauses.
 
-Go lets you achieve this with `time.Sleep`. Try adding it in to our code.
+C# lets you achieve this with `Thread.Sleep`. Try adding it in to our code.
 
-```go
-func Countdown(out io.Writer) {
-	for i := countdownStart; i > 0; i-- {
-		time.Sleep(1 * time.Second)
-		fmt.Fprintln(out, i)
+```csharp
+const string finalWord = "Go!";
+const string countdownStart = 3;
+
+public void Countdown(FakeWriter out) 
+{
+	for (var i = countdownStart; i > 0; i--)
+	{
+		Thread.Sleep(1000);
+		out.WriteLine(i);
 	}
-
-	time.Sleep(1 * time.Second)
-	fmt.Fprint(out, finalWord)
+	Thread.Sleep(1000);
+	out.WriteLine(finalWord);
 }
 ```
 
@@ -230,15 +233,24 @@ The tests still pass and the software works as intended but we have some problem
 
 We have a dependency on `Sleep`ing which we need to extract so we can then control it in our tests.
 
-If we can _mock_ `time.Sleep` we can use _dependency injection_ to use it instead of a "real" `time.Sleep` and then we can **spy on the calls** to make assertions on them.
+If we can _mock_ `Thread.Sleep` we can use _dependency injection_ to use it instead of a "real" `Thread.Sleep` and then we can **spy on the calls** to make assertions on them.
 
 ## Write the test first
 
-Let's define our dependency as an interface. This lets us then use a _real_ Sleeper in `main` and a _spy sleeper_ in our tests. By using an interface our `Countdown` function is oblivious to this and adds some flexibility for the caller.
+Let's define our dependency as a class. This lets us then use a _real_ Sleeper in `main` and a _spy sleeper_ in our tests. By using a class our `Countdown` function is oblivious to this and adds some flexibility for the caller.
 
-```go
-type Sleeper interface {
-	Sleep()
+```csharp
+class Sleeper 
+{
+	// private readonly int duration;
+    // public Sleeper(int duration)
+	// {
+	// 	this.duration = duration;
+	// }
+	public virtual void Sleep()
+	{
+		Thread.Sleep(1000);
+	}
 }
 ```
 
@@ -246,13 +258,15 @@ I made a design decision that our `Countdown` function would not be responsible 
 
 Now we need to make a _mock_ of it for our tests to use.
 
-```go
-type SpySleeper struct {
-	Calls int
-}
+```csharp
+public class SpySleeper : Sleeper
+{
+    public int Calls { get; private set; }
 
-func (s *SpySleeper) Sleep() {
-	s.Calls++
+    public override void Sleep()
+	{
+		this.Calls++;
+	}
 }
 ```
 
@@ -260,26 +274,16 @@ _Spies_ are a kind of _mock_ which can record how a dependency is used. They can
 
 Update the tests to inject a dependency on our Spy and assert that the sleep has been called 4 times.
 
-```go
-func TestCountdown(t *testing.T) {
-	buffer := &bytes.Buffer{}
-	spySleeper := &SpySleeper{}
-
-	Countdown(buffer, spySleeper)
-
-	got := buffer.String()
-	want := `3
-2
-1
-Go!`
-
-	if got != want {
-		t.Errorf("got %q want %q", got, want)
-	}
-
-	if spySleeper.Calls != 4 {
-		t.Errorf("not enough calls to sleeper, want 4 got %d", spySleeper.Calls)
-	}
+```csharp
+[Fact]
+public void TestCountdown()
+{
+	var fakeWriter = new FakeWriter();
+	var spySleeper = new SpySleeper();
+	Countdown(fakeWriter, spySleeper);
+	var expected = new List<string> {"3", "2", "1", "Go!"}
+	Assert.Equal(expected, fakeWriter.output);
+	Assert.Equal(4, spySleeper.Calls);
 }
 ```
 
@@ -295,15 +299,16 @@ too many arguments in call to Countdown
 
 We need to update `Countdown` to accept our `Sleeper`
 
-```go
-func Countdown(out io.Writer, sleeper Sleeper) {
-	for i := countdownStart; i > 0; i-- {
-		time.Sleep(1 * time.Second)
-		fmt.Fprintln(out, i)
+```csharp
+public void Countdown(FakeWriter out, Sleeper sleeper) 
+{
+	for (var i = countdownStart; i > 0; i--)
+	{
+		Thread.Sleep(1000);
+		out.WriteLine(i);
 	}
-
-	time.Sleep(1 * time.Second)
-	fmt.Fprint(out, finalWord)
+	Thread.Sleep(1000);
+	out.WriteLine(finalWord);
 }
 ```
 
@@ -315,38 +320,42 @@ If you try again, your `main` will no longer compile for the same reason
     want (io.Writer, Sleeper)
 ```
 
-Let's create a _real_ sleeper which implements the interface we need
+Let's use the _real_ sleeper which does what we need
 
-```go
-type DefaultSleeper struct{}
-
-func (d *DefaultSleeper) Sleep() {
-	time.Sleep(1 * time.Second)
+```csharp
+class Sleeper 
+{
+	public virtual void Sleep()
+	{
+		Thread.Sleep(1000);
+	}
 }
 ```
 
 We can then use it in our real application like so
 
-```go
-func main() {
-	sleeper := &DefaultSleeper{}
-	Countdown(os.Stdout, sleeper)
+```csharp
+public static void Main()
+{
+	var sleeper = new Sleeper();
+	Countdown(Console.Out, sleeper);
 }
 ```
 
 ## Write enough code to make it pass
 
-The test is now compiling but not passing because we're still calling the `time.Sleep` rather than the injected in dependency. Let's fix that.
+The test is now compiling but not passing because we're still calling the `Thread.Sleep` rather than the injected in dependency. Let's fix that.
 
-```go
-func Countdown(out io.Writer, sleeper Sleeper) {
-	for i := countdownStart; i > 0; i-- {
-		sleeper.Sleep()
-		fmt.Fprintln(out, i)
+```csharp
+public void Countdown(FakeWriter out, Sleeper sleeper) 
+{
+	for (var i = countdownStart; i > 0; i--)
+	{
+		sleeper.Sleep(1000);
+		out.WriteLine(i);
 	}
-
-	sleeper.Sleep()
-	fmt.Fprint(out, finalWord)
+	sleeper.Sleep(1000);
+	out.WriteLine(finalWord);
 }
 ```
 
@@ -370,18 +379,19 @@ Our latest change only asserts that it has slept 4 times, but those sleeps could
 
 When writing tests if you're not confident that your tests are giving you sufficient confidence, just break it! (make sure you have committed your changes to source control first though). Change the code to the following
 
-```go
-func Countdown(out io.Writer, sleeper Sleeper) {
-	for i := countdownStart; i > 0; i-- {
-		sleeper.Sleep()
+```csharp
+public void Countdown(FakeWriter out, Sleeper sleeper) 
+{
+	for (var i = countdownStart; i > 0; i--)
+	{
+		sleeper.Sleep(1000);
 	}
-
-	for i := countdownStart; i > 0; i-- {
-		fmt.Fprintln(out, i)
+	for (var i = countdownStart; i > 0; i--)
+	{
+		out.WriteLine(i);
 	}
-
-	sleeper.Sleep()
-	fmt.Fprint(out, finalWord)
+	sleeper.Sleep(1000);
+	out.WriteLine(finalWord);
 }
 ```
 
@@ -390,6 +400,8 @@ If you run your tests they should still be passing even though the implementatio
 Let's use spying again with a new test to check the order of operations is correct.
 
 We have two different dependencies and we want to record all of their operations into one list. So we'll create _one spy for them both_.
+
+# The below has not been changed to C# yet
 
 ```go
 type SpyCountdownOperations struct {
