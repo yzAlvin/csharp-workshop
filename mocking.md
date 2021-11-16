@@ -6,6 +6,8 @@ This doc has been adapted from the Learn Go with Tests’ book to use C# syntax.
 
 **[You can find the original chapter from the book here](https://quii.gitbook.io/learn-go-with-tests/go-fundamentals/mocking)**
 
+I have not changed a lot of the errors to what would actually occur with the C# compiler / xUnit, I would appreciate if you sent me what the real errors are if you work through this.
+
 ## Intro
 
 You have been asked to write a program which counts down from 3, printing each number on a new line (with a 1 second pause) and when it reaches zero it will print "Go!" and exit.
