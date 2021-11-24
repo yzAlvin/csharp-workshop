@@ -36,3 +36,12 @@ Target audience:
 * Classes
 
 * Interfaces
+
+## Recommendations
+
+The best way to learn C# is to write C#.
+
+Here are some links where you can practice C#:
+
+* https://exercism.org/tracks/csharp
+* https://www.codewars.com/
