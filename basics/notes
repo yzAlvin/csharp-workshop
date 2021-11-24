@@ -1,0 +1,4 @@
+C# is a programming language
+.NET is a framework for building applications on Windows (F#, VB.NET)
+
+Different ways to do the same thing: loop, linq, join example from https://github.com/Kedoodle/dotnet-demo/blob/main/Demo/Program.cs
